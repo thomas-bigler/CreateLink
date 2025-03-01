@@ -1,0 +1,26 @@
+I ICON "icon.ico"
+
+// Versionsinformationen
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "000004E4"
+    BEGIN
+      VALUE "CompanyName",      "Thomas Bigler"
+      VALUE "FileDescription",  "CreateLink - create LNK shortcuts"
+      VALUE "FileVersion",      "1.0.0.0"
+      VALUE "InternalName",     "CreateLink"
+      VALUE "LegalCopyright",   "\xA9 2024-2025 Thomas Bigler"
+      VALUE "OriginalFilename", "CreateLink.exe"
+      VALUE "ProductName",      "CreateLink - create LNK shortcuts"
+      VALUE "ProductVersion",   "1.0.0.0"
+    END
+  END
+
+  BLOCK "VarFileInfo" BEGIN
+    VALUE "Translation", 0x0000, 1252 // Sprachneutral
+  END
+END
