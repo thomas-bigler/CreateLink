@@ -14,6 +14,13 @@ function CommandLineToArgvW(lpCmdLine: PWideChar;out pNumArgs: Integer): PPWideC
 const 
 AppName='CreateLink v1.0.0.0';
 Copyright='(c) 2024-2026 bigler.thomas@gmail.com';
+CR=#13#10;
+
+Var
+  Buf:array[0..255] of char;
+  i,IcnNum,SW,e:integer;
+  arg:array[1..8] of array[0..2*max_Path] of WideChar;
+  
 
 function ParamStrW(Number: Integer): UnicodeString;
 var
@@ -42,7 +49,7 @@ begin
   if argv = nil then Exit;
   try
     if argc > 0 then
-      Result := argc - 1; // ParamStrW(0) ist der Programmname
+      Result := argc - 1;
   finally
     LocalFree(HLOCAL(argv));
   end;
@@ -69,7 +76,8 @@ begin
 end;
 
 Procedure ExpandEnvStrW(S:PWideChar);
-var t:array[0..512] of WideChar;
+var 
+  t:array[0..512] of WideChar;
 begin
   if ExpandEnvironmentStringsW(s,t,sizeof(t)-1)<>0 then lstrcpyW(s,t);
 end;
@@ -187,20 +195,17 @@ begin
 end;
 
 ////////
-
-
-
     
-Function w2p(const s:PWidechar):PChar;
-var 
-  p:array[0..16384] of Char;  
+Function WideToANSI(const Text:PWidechar):PChar;
+var
+  ByteLen:Integer;
 begin  
-  WideCharToMultiByte(CP_ACP, 0, s, -1, p, sizeof(p),NIL,NIL);
-  w2p:=@p;
+  ByteLen:=WideCharToMultiByte(CP_ACP, 0,Text, -1,nil, 0,nil, nil)-1;
+  WideCharToMultiByte(CP_ACP, 0, Text, -1, Buf, ByteLen,NIL,NIL);
+  result:=@Buf;
 end;
-
   
-function WR(fh: THandle; s: UnicodeString): DWORD;
+function FileWriteW(fh: THandle; s: UnicodeString): DWORD;
 var
   utf8: UTF8String;
   Written: DWORD;
@@ -210,7 +215,7 @@ begin
   Result := Written;
 end;
 
-function WL(fh: THandle; s: UnicodeString): DWORD;
+function FileWriteLnW(fh: THandle; s: UnicodeString): DWORD;
 var
   utf8: UTF8String;
   Written: DWORD;
@@ -235,12 +240,9 @@ var
 begin
   h := GetStdHandle(STD_OUTPUT_HANDLE);
 
-  if IsConsoleHandle(h) then
-  begin
+  if IsConsoleHandle(h) then begin
     WriteConsoleW(h, PWideChar(s), Length(s), written, nil);
-  end
-  else
-  begin
+  end else begin
     utf8 := UTF8String(s);
     WriteFile(h, utf8[1], Length(utf8), written, nil);
   end;
@@ -254,46 +256,48 @@ end;
 
 
 function writeExample(fn:PWideChar):Integer;
-var f:THandle;r:Integer;
+var 
+  f:THandle;
+  r:Integer;
 begin  
   {$i-}
   r:=1;
   f := CreateFileW(fn,GENERIC_WRITE,0,NIL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);    
   if (f<>INVALID_HANDLE_VALUE) then begin    
-    WL(f, PWideChar('@echo off'));
-    WL(f, PWideChar('ECHO CreateLink examples'));
-    WL(f, PWideChar('ECHO.'#13#10));
-    WL(f, PWideChar('MD "%USERPROFILE%\Desktop\CreateLink" 2>NUL'#13#10));
+    FileWriteLnW(f,
+    '@echo off'+CR+
+    'ECHO CreateLink examples'+CR+
+    'ECHO.'+CR+CR+
+    'MD "%USERPROFILE%\Desktop\CreateLink" 2>NUL'+CR+CR+
+    'CreateLink "%USERPROFILE%\Desktop\CreateLink\Notepad.lnk" "%SYSTEMROOT%\Notepad.exe"'+CR+CR+
     
-    WL(f, PWideChar('CreateLink "%USERPROFILE%\Desktop\CreateLink\Notepad.lnk" "%SYSTEMROOT%\Notepad.exe"'#13#10));        
+    'CreateLink "%USERPROFILE%\Desktop\CreateLink\On-Screen Keyboard.lnk"^'+CR+
+    ' "%SYSTEMROOT%\System32\osk.exe"^'+CR+
+    ' ""^'+CR+
+    ' "%SYSTEMROOT%\System32"^'+CR+
+    ' "On-Screen Keyboard can be used instead of a physical keyboard"^'+CR+
+    ' "%SYSTEMROOT%\System32\osk.exe"^'+CR+
+    ' ""^'+CR+
+    ' 1'+CR+CR+
     
-    WL(f, PWideChar('CreateLink "%USERPROFILE%\Desktop\CreateLink\On-Screen Keyboard.lnk"^'));
-    WL(f, PWideChar(' "%SYSTEMROOT%\System32\osk.exe"^'));    
-    WL(f, PWideChar(' ""^'));
-    WL(f, PWideChar(' "%SYSTEMROOT%\System32"^'));
-    WL(f, PWideChar(' "On-Screen Keyboard can be used instead of a physical keyboard"^'));
-    WL(f, PWideChar(' "%SYSTEMROOT%\System32\osk.exe"^'));
-    WL(f, PWideChar(' ""^'));
-    WL(f, PWideChar(' 1'#13#10));
+    'CreateLink "%USERPROFILE%\Desktop\CreateLink\Character Map.lnk"^'+CR+
+    ' "%SYSTEMROOT%\System32\charmap.exe"^'+CR+
+    ' ""^'+CR+
+    ' "%SYSTEMROOT%\System32"^'+CR+
+    ' "View all characters in any installed font"^'+CR+
+    ' "%SYSTEMROOT%\System32\charmap.exe"^'+CR+
+    ' ""^'+CR+
+    ' 1'+CR+CR+
     
-    WL(f, PWideChar('CreateLink "%USERPROFILE%\Desktop\CreateLink\Character Map.lnk"^'));
-    WL(f, PWideChar(' "%SYSTEMROOT%\System32\charmap.exe"^'));    
-    WL(f, PWideChar(' ""^'));
-    WL(f, PWideChar(' "%SYSTEMROOT%\System32"^'));
-    WL(f, PWideChar(' "View all characters in any installed font"^'));
-    WL(f, PWideChar(' "%SYSTEMROOT%\System32\charmap.exe"^'));
-    WL(f, PWideChar(' ""^'));
-    WL(f, PWideChar(' 1'#13#10));    
-    
-    WL(f, PWideChar('CreateLink "%USERPROFILE%\Desktop\CreateLink\Far Manager.lnk"^'));
-    WL(f, PWideChar(' "c:\Program Files\Far Manager\Far.exe"^'));
-    WL(f, PWideChar(' ""^'));
-    WL(f, PWideChar(' "c:\Program Files\Far Manager"^'));
-    WL(f, PWideChar(' "Classical File Manager"^'));
-    WL(f, PWideChar(' "c:\Program Files\Far Manager\Far.exe"^'));
-    WL(f, PWideChar(' 2^'));
-    WL(f, PWideChar(' 3'#13#10));    
-    WL(f, PWideChar('PAUSE'));
+    'CreateLink "%USERPROFILE%\Desktop\CreateLink\Far Manager.lnk"^'+CR+
+    ' "c:\Program Files\Far Manager\Far.exe"^'+CR+
+    ' ""^'+CR+
+    ' "c:\Program Files\Far Manager"^'+CR+
+    ' "Classical File Manager"^'+CR+
+    ' "c:\Program Files\Far Manager\Far.exe"^'+CR+
+    ' 2^'+CR+
+    ' 3'+CR+CR+
+    'PAUSE');
     r:=0;
   end;
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$07);
@@ -301,32 +305,14 @@ begin
   result:=ioresult+r;
 end;
 
-
-
-procedure SetColor(color: Word);
-var
-  h: THandle;
 begin
-  h := GetStdHandle(STD_OUTPUT_HANDLE);
-  if GetFileType(h) = FILE_TYPE_CHAR then
-    SetConsoleTextAttribute(h, color);
-end;
-
-
-var 
-  i,IcnNum,SW,e:integer;
-  arg:array[1..8] of array[0..2*max_Path] of WideChar;
-
-begin
-  
   ZeroMemory(@arg,sizeOf(arg));
-  // Get arguments
-  for i:=1 to ParamCountW do begin
+  
+  for i:=1 to ParamCountW do 
     lstrcpyW(arg[i],PWideChar(ParamStrW(i)));    
-    //MessageBoxW(0,arg[i],'GetCommandLineW',0);
-  end;
-  val(w2p(@arg[7][0]),IcnNum,e);if e<>0 then IcnNum:=0;
-  val(w2p(@arg[8][0]),SW,e);if e<>0 then SW:=1;
+  
+  val(WideToANSI(@arg[7][0]),IcnNum,e);if e<>0 then IcnNum:=0;
+  val(WideToANSI(@arg[8][0]),SW,e);if e<>0 then SW:=1;
   
   if paramCountW<2 then begin
     
@@ -341,24 +327,25 @@ begin
         halt(1);  
       end;
     end;    
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0a);
-    WriteLnW(#13#10);
-    WriteW(PWideChar(#13+AppName));WriteLnW(PWideChar(Copyright));
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0a);    
+    WriteW(PWideChar(#13+AppName+#32));WriteLnW(PWideChar(Copyright));
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0b);
     WriteLnW('CREATELINK Link Target [Argument(s)] [WorkingDirectory] [Description] [IconPath] [IconNumber] [WndParams]'#13#10);    
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$07);  
-    WriteW('Example (batch, using line-break ^):'#9#9#9);SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0b);  
+    WriteW('Example (batch, using line-break ^):'#9#9#9);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0b);  
     WriteLnW('CREATELINK x   => EXAMPLE.BAT on user desktop'#13#10);    
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$07);  
-    WriteLnW(' CreateLink "%USERPROFILE%\Desktop\Far Manager.lnk"^'#9'Link');
-    WriteLnW('  "c:\Program Files\Far Manager\Far.exe"^'#9#9'Executable');
-    WriteLnW('  ""^'#9#9#9#9#9#9#9'Argument(s)');
-    WriteLnW('  "c:\Program Files\Far Manager"^'#9#9#9'Working Directory');
-    WriteLnW('  "Classical File Manager"^'#9#9#9#9'Description');
-    WriteLnW('  "c:\Program Files\Far Manager\Far.exe"^'#9#9'Icon Path');
-    WriteLnW('  2^'#9#9#9#9#9#9#9'Icon Number');
-    WriteLnW('  3'#9#9#9#9#9#9#9'Show Command [1{Normal}|3{Maximized}|7{MinNoActive}]'#13#10);
-    WriteLnW('Overwrites existing link without prompt.');
+    WriteLnW(
+    ' CreateLink "%USERPROFILE%\Desktop\Far Manager.lnk"^'#9'Link'+CR+
+    '  "c:\Program Files\Far Manager\Far.exe"^'#9#9'Executable'+CR+
+    '  ""^'#9#9#9#9#9#9#9'Argument(s)'+CR+
+    '  "c:\Program Files\Far Manager"^'#9#9#9'Working Directory'+CR+
+    '  "Classical File Manager"^'#9#9#9#9'Description'+CR+
+    '  "c:\Program Files\Far Manager\Far.exe"^'#9#9'Icon Path'+CR+
+    '  2^'#9#9#9#9#9#9#9'Icon Number'+CR+
+    '  3'#9#9#9#9#9#9#9'Show Command [1 {Normal}|3 {Maximized}|7 {MinNoActive}]'+CR+CR+
+    'Existing links will be overwritten without prompting.');
     halt(0);
   end;    
   
