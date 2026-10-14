@@ -2,6 +2,7 @@
 {$APPTYPE CONSOLE}
 {$MODE DELPHI}
 {$warnings on}
+{ $ hints on}
 {$Define UNICODE}
 {$R version.res}
 
@@ -12,7 +13,7 @@ Uses Windows;
 
 function CommandLineToArgvW(lpCmdLine: PWideChar;out pNumArgs: Integer): PPWideChar; stdcall; external 'shell32.dll';
 const 
-AppName='CreateLink v1.0.0.0';
+AppName='CreateLink v1.1.0.0 (x64)';
 Copyright='(c) 2024-2026 bigler.thomas@gmail.com';
 CR=#13#10;
 
@@ -24,19 +25,27 @@ Var
 
 function ParamStrW(Number: Integer): UnicodeString;
 var
-  argc: Integer;
-  argv: PPWideChar;
+  argc : Integer;
+  argv : PPWideChar;
+  Buf  : array[0..MAX_PATH] of WideChar;
 begin
   Result := '';
+  if Number = 0 then begin
+    GetModuleFileNameW(0, Buf, MAX_PATH);
+    Result := Buf;
+    Exit;
+  end;
+
   argv := CommandLineToArgvW(GetCommandLineW, argc);
   if argv = nil then Exit;
+
   try
-    if (Number >= 0) and (Number < argc) then
-      Result := argv[Number];
+    if Number < argc then Result := argv[Number];
   finally
     LocalFree(HLOCAL(argv));
   end;
 end;
+
 
 
 function ParamCountW: Integer;
@@ -161,7 +170,6 @@ begin
     SetFileAttributesW(LinkSelfFileName,FILE_ATTRIBUTE_NORMAL);
     DeleteFileW(LinkSelfFileName);
   end;
-
   
   lStrCpyW(wDir,WorkDir);
   if wDir[0]='"' then lstrcpyW(wDir,@wDir[1]); // prevent double quotes
@@ -205,22 +213,22 @@ begin
   result:=@Buf;
 end;
   
-function FileWriteW(fh: THandle; s: UnicodeString): DWORD;
-var
-  utf8: UTF8String;
-  Written: DWORD;
-begin
-  utf8 := UTF8String(s);
-  WriteFile(fh, utf8[1], Length(utf8), Written, nil);
-  Result := Written;
-end;
+//~ function FileWriteW(fh: THandle; s: UnicodeString): DWORD;
+//~ var
+  //~ utf8: UTF8String;
+  //~ Written: DWORD;
+//~ begin
+  //~ utf8 := UTF8String(s);Written:=0;
+  //~ WriteFile(fh, utf8[1], Length(utf8), Written, nil);
+  //~ Result := Written;
+//~ end;
 
 function FileWriteLnW(fh: THandle; s: UnicodeString): DWORD;
 var
   utf8: UTF8String;
   Written: DWORD;
 begin
-  utf8 := UTF8String(s + #13#10);
+  utf8 := UTF8String(s + #13#10);Written:=0;
   WriteFile(fh, utf8[1], Length(utf8), Written, nil);
   Result := Written;
 end;
@@ -239,7 +247,7 @@ var
   utf8: UTF8String;
 begin
   h := GetStdHandle(STD_OUTPUT_HANDLE);
-
+  written:=0;
   if IsConsoleHandle(h) then begin
     WriteConsoleW(h, PWideChar(s), Length(s), written, nil);
   end else begin
@@ -290,11 +298,11 @@ begin
     ' 1'+CR+CR+
     
     'CreateLink "%USERPROFILE%\Desktop\CreateLink\Far Manager.lnk"^'+CR+
-    ' "c:\Program Files\Far Manager\Far.exe"^'+CR+
+    ' "%ProgramW6432%\Far Manager\Far.exe"^'+CR+
     ' ""^'+CR+
-    ' "c:\Program Files\Far Manager"^'+CR+
+    ' "%ProgramW6432%\Far Manager"^'+CR+
     ' "Classical File Manager"^'+CR+
-    ' "c:\Program Files\Far Manager\Far.exe"^'+CR+
+    ' "%ProgramW6432%\Far Manager\Far.exe"^'+CR+
     ' 2^'+CR+
     ' 3'+CR+CR+
     'PAUSE');
@@ -304,6 +312,8 @@ begin
   CloseHandle(f);{$i+}
   result:=ioresult+r;
 end;
+
+
 
 begin
   ZeroMemory(@arg,sizeOf(arg));
@@ -328,7 +338,7 @@ begin
       end;
     end;    
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0a);    
-    WriteW(PWideChar(#13+AppName+#32));WriteLnW(PWideChar(Copyright));
+    WriteW(PWideChar(#13+AppName+#32));WriteLnW(PWideChar(Copyright+#13#10));
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$0b);
     WriteLnW('CREATELINK Link Target [Argument(s)] [WorkingDirectory] [Description] [IconPath] [IconNumber] [WndParams]'#13#10);    
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$07);  
@@ -338,11 +348,11 @@ begin
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),$07);  
     WriteLnW(
     ' CreateLink "%USERPROFILE%\Desktop\Far Manager.lnk"^'#9'Link'+CR+
-    '  "c:\Program Files\Far Manager\Far.exe"^'#9#9'Executable'+CR+
+    '  "%ProgramW6432%\Far Manager\Far.exe"^'#9#9#9'Executable'+CR+
     '  ""^'#9#9#9#9#9#9#9'Argument(s)'+CR+
-    '  "c:\Program Files\Far Manager"^'#9#9#9'Working Directory'+CR+
+    '  "%ProgramW6432%\Far Manager"^'#9#9#9#9'Working Directory'+CR+
     '  "Classical File Manager"^'#9#9#9#9'Description'+CR+
-    '  "c:\Program Files\Far Manager\Far.exe"^'#9#9'Icon Path'+CR+
+    '  "%ProgramW6432%\Far Manager\Far.exe"^'#9#9#9'Icon Path'+CR+
     '  2^'#9#9#9#9#9#9#9'Icon Number'+CR+
     '  3'#9#9#9#9#9#9#9'Show Command [1 {Normal}|3 {Maximized}|7 {MinNoActive}]'+CR+CR+
     'Existing links will be overwritten without prompting.');

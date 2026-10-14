@@ -2,8 +2,8 @@ I ICON "icon.ico"
 
 // Versionsinformationen
 1 VERSIONINFO
-FILEVERSION     1,0,0,0
-PRODUCTVERSION  1,0,0,0
+FILEVERSION     1,1,0,0
+PRODUCTVERSION  1,1,0,0
 FILEFLAGSMASK 0x3FL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -15,13 +15,13 @@ BEGIN
     BLOCK "000004E4"
     BEGIN
       VALUE "CompanyName",      "Thomas Bigler"
-      VALUE "FileDescription",  "CreateLink - create LNK shortcuts"
-      VALUE "FileVersion",      "1.0.0.0"
+      VALUE "FileDescription",  "CreateLink - create LNK shortcuts (x64)"
+      VALUE "FileVersion",      "1.1.0.0"
       VALUE "InternalName",     "CreateLink"
-      VALUE "LegalCopyright",   "\xA9 2024-2025 Thomas Bigler"
+      VALUE "LegalCopyright",   "\xA9 2024-2026 Thomas Bigler"
       VALUE "OriginalFilename", "CreateLink.exe"
-      VALUE "ProductName",      "CreateLink - create LNK shortcuts"
-      VALUE "ProductVersion",   "1.0.0.0"
+      VALUE "ProductName",      "CreateLink - create LNK shortcuts (x64)"
+      VALUE "ProductVersion",   "1.1.0.0"
     END
   END
 
